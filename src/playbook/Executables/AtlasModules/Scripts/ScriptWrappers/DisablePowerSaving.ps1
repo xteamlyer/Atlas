@@ -120,13 +120,18 @@ Get-CimInstance -ClassName MSPower_DeviceEnable -Namespace root/WMI | Set-CimIns
 
 Write-Host "Disabling miscellaneous power-saving..." -ForegroundColor Yellow
 # Disable D3 support on SATA/NVMEs while using Modern Standby
-New-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Storage" -Name "StorageD3InModernStandby" -Value 0 -PropertyType DWORD -Force | Out-Null
+$storagePath = "HKLM:\SYSTEM\CurrentControlSet\Control\Storage"
+if (!(Test-Path $storagePath)) { New-Item -Path $storagePath -Force | Out-Null }
+New-ItemProperty -Path $storagePath -Name "StorageD3InModernStandby" -Value 0 -PropertyType DWORD -Force | Out-Null
 # Disable IdlePowerMode for stornvme.sys (storage devices) - the device will never enter a low-power state
-New-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\stornvme\Parameters\Device" -Name "IdlePowerMode" -Value 0 -PropertyType DWORD -Force | Out-Null
+$stornvmePath = "HKLM:\SYSTEM\CurrentControlSet\Services\stornvme\Parameters\Device"
+if (Test-Path $stornvmePath) {
+    New-ItemProperty -Path $stornvmePath -Name "IdlePowerMode" -Value 0 -PropertyType DWORD -Force | Out-Null
+}
 # Disable power throttling
 $powerKey = "HKLM:\SYSTEM\CurrentControlSet\Control\Power\PowerThrottling"
-if (!(Test-Path $powerKey)) { New-Item $powerKey | Out-Null }
-New-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Power\PowerThrottling" -Name "PowerThrottlingOff" -Value 1 -PropertyType DWORD -Force | Out-Null
+if (!(Test-Path $powerKey)) { New-Item -Path $powerKey -Force | Out-Null }
+New-ItemProperty -Path $powerKey -Name "PowerThrottlingOff" -Value 1 -PropertyType DWORD -Force | Out-Null
 
 #if ($Silent) { exit }
 #Read-Pause "`nCompleted.`nPress Enter to exit"

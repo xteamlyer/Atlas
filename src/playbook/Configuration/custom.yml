@@ -4,7 +4,7 @@ description: Runs all of the Playbook files
 actions:
   # some changes requires default user access. loading the hive before everything else is required
   - !powerShell:
-    command: 'reg load HKU\AME_UserHive_Default C:\Users\Default\NTUSER.DAT'
+    command: 'reg load HKU\AME_UserHive_Default $env:HOMEDRIVE\Users\Default\NTUSER.DAT'
     oobe: false
     wait: true
   - !writeStatus: { status: "Deleting old AtlasOS folders" }
@@ -14,6 +14,14 @@ actions:
     onUpgrade: true
     wait: true
     runas: currentUserElevated
+  - !powerShell:
+    command: |
+      Start-Process -FilePath """$windir\AtlasDesktop\6. Advanced Configuration\Process Explorer\Uninstall Process Explorer.cmd""" -ArgumentList "/silent" -WindowStyle Hidden
+      taskkill /IM taskmgr.exe
+    weight: 2
+    wait: true
+    exeDir: true
+    onUpgrade: true
   - !powerShell:
     command: |
       $windir = [Environment]::GetFolderPath('Windows')
@@ -36,7 +44,6 @@ actions:
           Copy-Item -Path $_ -Destination $windir -Force -Recurse
           if (!$?) { exit 2 }
       }
-      Start-Process -FilePath """$windir\AtlasDesktop\6. Advanced Configuration\Process Explorer\Uninstall Process Explorer.cmd""" -ArgumentList "/silent" -WindowStyle Hidden
       Copy-Item -Path 'Themes\*' -Destination """$windir\Resources\Themes""" -Force -Recurse
     weight: 10
     wait: true
@@ -69,7 +76,10 @@ actions:
 
   # Set hidden Settings pages
   # Done before everything else as scripts will overwrite it
-  - !task: { path: 'tweaks\qol\set-hidden-settings-pages.yml' }
+  - !task: {
+      path: 'tweaks\qol\set-hidden-settings-pages.yml',
+      onUpgrade: false,
+    }
 
   # Main tasks
   - !task: { path: 'atlas\start.yml' }
@@ -79,6 +89,9 @@ actions:
   - !task: { path: 'atlas\default.yml' }
   - !task: { path: 'atlas\revert.yml' }
   - !task: { path: "tweaks.yml" }
+
+  # Branding for upgrades
+  - !task: { path: 'tweaks\misc\config-oem-information.yml', onUpgrade: true }
 
   # Set hives to HKU default user
   - !writeStatus: { status: "Applying hives..." }
@@ -107,6 +120,6 @@ actions:
   - !writeStatus: { status: "Securing PowerShell execution policy" }
   - !registryValue:
     path: 'HKLM\SOFTWARE\Microsoft\PowerShell\1\ShellIds\Microsoft.PowerShell'
-    value: 'ExecutionPolicy'
-    data: 'RemoteSigned'
+    value: "ExecutionPolicy"
+    data: "RemoteSigned"
     type: REG_SZ

@@ -1,6 +1,7 @@
 ---
 title: Tweaks Root Playbook File
 description: Runs all of the Atlas playbook tweaks
+onUpgrade: false
 actions:
   # ------------------------- NOTES ------------------------- #
 
@@ -90,6 +91,7 @@ actions:
   - !task: {path: 'tweaks\privacy\disable-perf-track.yml'}
   - !task: {path: 'tweaks\privacy\disable-privacy-experience.yml'}
   - !task: {path: 'tweaks\privacy\disable-recall-snap.yml'}
+  - !task: {path: 'tweaks\privacy\disable-click-to-do.yml'}
   - !task: {path: 'tweaks\privacy\disable-device-monitoring.yml'}
   - !task: {path: 'tweaks\privacy\disable-rsop-logging.yml'}
   - !task: {path: 'tweaks\privacy\disable-speech-auto-updates.yml'}
