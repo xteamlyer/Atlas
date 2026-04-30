@@ -1,13 +1,10 @@
 # Guard against re-running after a profile reset. Windows 24H2/25H2 can recreate a user profile
 # from the Default template after sleep/wake, which causes RunOnce to fire this script again.
 # We track per-SID completion in HKLM (survives profile resets, unlike HKCU) and exit early if
-# this user was already set up. -ErrorAction Stop ensures real errors are not silently swallowed.
+# this user was already set up.
 $sid = [System.Security.Principal.WindowsIdentity]::GetCurrent().User.Value
-try {
-    if ((Get-ItemProperty 'HKLM:\SOFTWARE\AtlasOS\UserSetup' -Name $sid -ErrorAction Stop).$sid -eq 1) { exit }
-} catch {
-    # Key or property does not exist yet - this is the first run, continue normally
-}
+$marker = Get-ItemProperty -Path 'HKLM:\SOFTWARE\AtlasOS\UserSetup' -Name $sid -ErrorAction SilentlyContinue
+if ($marker.$sid -eq 1) { exit }
 
 $windir = [Environment]::GetFolderPath('Windows')
 & "$windir\AtlasModules\initPowerShell.ps1"
