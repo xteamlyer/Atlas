@@ -4,8 +4,11 @@ set "stateValue=0"
 set "scriptPath=%~f0"
 set indexConfPath="%windir%\AtlasModules\Scripts\indexConf.cmd"
 set "silentMode=0"
-
-echo %* | findstr /i /c:"/silent" /c:"-silent" /c:"/quiet" > nul 2>&1 && set "silentMode=1"
+for %%a in (%*) do (
+    if /I "%%a"=="/silent" set "silentMode=1"
+    if /I "%%a"=="-silent" set "silentMode=1"
+    if /I "%%a"=="/quiet" set "silentMode=1"
+)
 
 if "%silentMode%"=="1" (
     fltmc > nul 2>&1 || (
@@ -20,8 +23,10 @@ if "%silentMode%"=="1" (
 )
 
 if not exist "%indexConfPath%" (
-    echo The 'indexConf.cmd' script wasn't found in AtlasModules.
-    pause
+    if "%silentMode%"=="0" (
+        echo The 'indexConf.cmd' script wasn't found in AtlasModules.
+        pause
+    )
     exit /b 1
 )
 set "indexConf=call %indexConfPath%"

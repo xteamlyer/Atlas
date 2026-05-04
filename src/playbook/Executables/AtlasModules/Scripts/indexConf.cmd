@@ -24,6 +24,8 @@ if "%~1"=="/cleanpolicies" (
         "HKLM\Software\Policies\Microsoft\Windows\Windows Search\DefaultIndexedPaths"
         "HKLM\Software\Microsoft\Windows Search\CurrentPolicies\DefaultExcludedPaths"
         "HKLM\Software\Microsoft\Windows Search\CurrentPolicies\DefaultIndexedPaths"
+        "HKLM\Software\Microsoft\Windows Search\Gather\Windows\SystemIndex\Sites\LocalHost\Paths"
+        "HKLM\Software\Microsoft\Windows Search\Gather\Windows\SystemIndex\Sites\LocalHost\Exclusions"
     ) do (
         reg delete %%a /f > nul 2>&1
         reg add %%a /f > nul
@@ -38,7 +40,7 @@ if "%~1"=="/start" (
     %___settings% /unhide cortana-windowssearch
 
     echo Updating policy... ^(this might take a moment^)
-    gpupdate > nul
+    gpupdate /force /wait:0 > nul 2>&1
 )
 
 if "%~1"=="/stop" (
@@ -47,8 +49,8 @@ if "%~1"=="/stop" (
     %___settings% /hide cortana-windowssearch
 
     rem Kill the search index Control Panel pane
-    powershell -NoP -NonI -C "Stop-Process -Id (gcim Win32_Process | ? { $_.CommandLine -match 'srchadmin.dll' }).ProcessId -Force"
-    
+    powershell -NoP -NonI -C "Get-Process | Where-Object { $_.MainWindowTitle -like '*Indexing Options*' -or $_.CommandLine -match 'srchadmin.dll' } | Stop-Process -Force -ErrorAction SilentlyContinue"
+
     sc config WSearch start=disabled > nul
     sc stop WSearch > nul 2>&1
 )
@@ -69,14 +71,29 @@ exit /b
 
 
 :addIndexPath
+    setlocal enabledelayedexpansion
     echo Configuring indexer path...
-    set policy=DefaultIndexedPaths
-    if "%~1"=="/exclude" set policy=DefaultExcludedPaths
 
-    set "searchPath1=%~2"
-    set "searchPath=file:///%searchPath1%\*"
-    reg add "HKLM\Software\Policies\Microsoft\Windows\Windows Search\%policy%" /v "%searchPath%" /t REG_SZ /d "%searchPath%" /f > nul
-    reg add "HKLM\Software\Microsoft\Windows Search\CurrentPolicies\%policy%" /v "%searchPath%" /t REG_SZ /d "%searchPath%" /f > nul
+    if "%~1"=="/include" set "___root=HKLM\Software\Microsoft\Windows Search\Gather\Windows\SystemIndex\Sites\LocalHost\Paths"
+    if "%~1"=="/exclude" set "___root=HKLM\Software\Microsoft\Windows Search\Gather\Windows\SystemIndex\Sites\LocalHost\Exclusions"
+
+    if not defined ___root (endlocal & exit /b)
+
+    set "___i=0"
+    :checkExisting
+    for /f "usebackq tokens=2*" %%a in (`reg query "!___root!\!___i!" /v "Path" 2^>nul`) do (
+        if /I "%%b"=="%~2" (
+            echo Path already exists in the index, skipping...
+            endlocal & exit /b
+        )
+    )
+    reg query "!___root!\!___i!" > nul 2>&1 && (
+        set /a "___i+=1"
+        goto checkExisting
+    )
+
+    reg add "!___root!\!___i!" /v "Path" /t REG_SZ /d "%~2" /f > nul
+    endlocal
     exit /b
 
 
