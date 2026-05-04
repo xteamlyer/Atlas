@@ -9,6 +9,12 @@ for %%a in (
 	)
 )
 
+:: trying winget as a fallback incase it cant find onedrive files
+if not exist "%windir%\System32\OneDriveSetup.exe" if not exist "%windir%\SysWOW64\OneDriveSetup.exe" (
+	winget uninstall --id "Microsoft.OneDrive" --silent --accept-source-agreements > nul 2>&1
+	winget uninstall "Microsoft OneDrive" --silent --accept-source-agreements > nul 2>&1
+)
+
 :: If the "Volatile Environment" key exists, that means it is a proper user. Built in accounts/SIDs don't have this key.
 for /f "usebackq tokens=2 delims=\" %%a in (`reg query HKU ^| findstr /r /x /c:"HKEY_USERS\\S-.*" /c:"HKEY_USERS\\AME_UserHive_[^_]*"`) do (
     reg query "HKU\%%a" | findstr /c:"Volatile Environment" /c:"AME_UserHive_" > nul && (
@@ -58,3 +64,11 @@ reg delete "HKU\%~1\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Desktop\N
 
 reg delete "HKU\%~1\Environment" /v "OneDrive" /f > nul 2>&1
 reg delete "HKU\%~1\SOFTWARE\Microsoft\Windows\CurrentVersion\Run" /v "OneDriveSetup" /f > nul 2>&1
+
+:: Fix folder redirection — this sometimes persists after uninstallation for whatever reason
+set "___sf=HKU\%~1\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders"
+reg add "%___sf%" /v "{F42EE2D3-909F-4907-8871-4C22FC0BF756}" /t REG_EXPAND_SZ /d "%%USERPROFILE%%\Documents" /f > nul 2>&1
+reg add "%___sf%" /v "Personal" /t REG_EXPAND_SZ /d "%%USERPROFILE%%\Documents" /f > nul 2>&1
+reg add "%___sf%" /v "Desktop" /t REG_EXPAND_SZ /d "%%USERPROFILE%%\Desktop" /f > nul 2>&1
+reg add "%___sf%" /v "My Pictures" /t REG_EXPAND_SZ /d "%%USERPROFILE%%\Pictures" /f > nul 2>&1
+reg add "%___sf%" /v "{0DDD015D-B06C-45D5-8C4C-F59713854639}" /t REG_EXPAND_SZ /d "%%USERPROFILE%%\Pictures" /f > nul 2>&1
