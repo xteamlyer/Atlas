@@ -1,4 +1,3 @@
-
 taskkill /f /im OneDrive.exe > nul 2>&1
 for %%a in (
 	"%windir%\System32\OneDriveSetup.exe"
@@ -41,6 +40,8 @@ for /f "tokens=2 delims=\" %%a in ('schtasks /query /fo list /v 2^>nul ^| findst
 
 reg delete "HKLM\SOFTWARE\Classes\CLSID\{018D5C66-4533-4307-9B53-224DE2ED1FE6}" /f > nul 2>&1
 reg delete "HKLM\SOFTWARE\Classes\WOW6432Node\CLSID\{018D5C66-4533-4307-9B53-224DE2ED1FE6}" /f > nul 2>&1
+reg delete "HKLM\SOFTWARE\Classes\CLSID\{A0A7DEC5-B1A7-4A47-847D-1D005787621E}" /f > nul 2>&1
+reg delete "HKLM\SOFTWARE\Classes\WOW6432Node\CLSID\{A0A7DEC5-B1A7-4A47-847D-1D005787621E}" /f > nul 2>&1
 
 exit /b
 
@@ -60,7 +61,10 @@ for /f "usebackq delims=" %%a in (`reg query "HKU\%~1\SOFTWARE\Microsoft\Windows
 
 reg delete "HKU\%~1\SOFTWARE\Classes\CLSID\{018D5C66-4533-4307-9B53-224DE2ED1FE6}" /f > nul 2>&1
 reg delete "HKU\%~1\SOFTWARE\Classes\WOW6432Node\CLSID\{018D5C66-4533-4307-9B53-224DE2ED1FE6}" /f > nul 2>&1
+reg delete "HKU\%~1\SOFTWARE\Classes\CLSID\{A0A7DEC5-B1A7-4A47-847D-1D005787621E}" /f > nul 2>&1
+reg delete "HKU\%~1\SOFTWARE\Classes\WOW6432Node\CLSID\{A0A7DEC5-B1A7-4A47-847D-1D005787621E}" /f > nul 2>&1
 reg delete "HKU\%~1\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Desktop\NameSpace\{018D5C66-4533-4307-9B53-224DE2ED1FE6}" /f > nul 2>&1
+reg delete "HKU\%~1\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Desktop\NameSpace\{A0A7DEC5-B1A7-4A47-847D-1D005787621E}" /f > nul 2>&1
 
 reg delete "HKU\%~1\Environment" /v "OneDrive" /f > nul 2>&1
 reg delete "HKU\%~1\SOFTWARE\Microsoft\Windows\CurrentVersion\Run" /v "OneDriveSetup" /f > nul 2>&1
